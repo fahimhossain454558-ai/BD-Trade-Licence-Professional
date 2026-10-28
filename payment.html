@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Payment Approval Panel - Luxury Edition</title>
+    
+    <!-- Google Fonts for All 13 Stylish Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Playfair+Display:ital,wght@0,600;1,600&family=Cormorant+Garamond:wght@600&family=Great+Vibes&family=Montserrat:wght@500;700&family=Oswald:wght@500&family=Sacramento&family=Bebas+Neue&family=Dancing+Script:wght@700&family=Lobster&family=Pacifico&family=Righteous&family=Cinzel+Decorative:wght@700&display=swap" rel="stylesheet">
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+    <style>
+        body { 
+            font-family: 'Times New Roman', Times, serif; 
+            background: linear-gradient(135deg, #1e1b4b, #311042, #111827); 
+            background-size: 400% 400%;
+            animation: gradientBG 12s ease infinite;
+            color: #334155; 
+            padding: 40px 20px; 
+            min-height: 100vh; 
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .container { 
+            max-width: 950px; 
+            margin: auto; 
+            background: rgba(255, 255, 255, 0.95); 
+            backdrop-filter: blur(12px);
+            padding: 35px; 
+            border-radius: 20px; 
+            box-shadow: 0 25px 60px rgba(109, 40, 217, 0.35); 
+            border: 1px solid rgba(168, 129, 222, 0.3);
+        }
+
+        .header-flex {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        h2 { 
+            color: #4c1d95; 
+            margin: 0;
+            font-size: 28px;
+            letter-spacing: 0.5px;
+            text-shadow: 1px 1px 2px rgba(155, 114, 207, 0.2);
+        }
+
+        .admin-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-top-action {
+            background: rgba(124, 58, 237, 0.1);
+            color: #581c87;
+            border: 1px solid #c084fc;
+            padding: 8px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-family: 'Times New Roman', Times, serif;
+            transition: all 0.2s;
+        }
+        .btn-top-action:hover {
+            background: #7c3aed;
+            color: white;
+        }
+
+        table { 
+            width: 100%; 
+            border-collapse: separate; 
+            border-spacing: 0; 
+            margin-top: 20px; 
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        th, td { 
+            padding: 14px 18px; 
+            border-bottom: 1px solid #e9d5ff; 
+            border-right: 1px solid #f3e8ff;
+            text-align: left; 
+            font-size: 16px; 
+        }
+
+        th:last-child, td:last-child {
+            border-right: none;
+        }
+
+        th { 
+            background: linear-gradient(135deg, #7c3aed, #9b72cf); 
+            color: white; 
+            font-weight: bold;
+            letter-spacing: 0.5px;
+        }
+
+        tr:nth-child(even) { background: #faf5ff; }
+        tr:hover { background: #f3e8ff; transition: background 0.2s ease; }
+        
+        .action-btns { display: flex; gap: 8px; justify-content: center; align-items: center; }
+        
+        .btn-approve { 
+            background: linear-gradient(135deg, #059669, #10b981); 
+            color: white; 
+            border: none; 
+            padding: 8px 14px; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .btn-approve:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(16, 185, 129, 0.4); }
+
+        .btn-reject { 
+            background: linear-gradient(135deg, #dc2626, #ef4444); 
+            color: white; 
+            border: none; 
+            padding: 8px 14px; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .btn-reject:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(239, 68, 68, 0.4); }
+
+        .btn-approved { background: #047857; color: white; border: none; padding: 8px 14px; border-radius: 8px; cursor: default; font-weight: bold; }
+        .btn-rejected { background: #991b1b; color: white; border: none; padding: 8px 14px; border-radius: 8px; cursor: default; font-weight: bold; }
+        
+        .btn-clear { 
+            background: linear-gradient(135deg, #7f1d1d, #b91c1c); 
+            color: white; 
+            border: none; 
+            padding: 12px 24px; 
+            border-radius: 10px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            font-size: 15px;
+            margin-top: 25px; 
+            box-shadow: 0 4px 15px rgba(185, 28, 28, 0.3);
+            transition: transform 0.2s;
+        }
+        .btn-clear:hover { transform: translateY(-2px); }
+
+        .no-data { text-align: center; padding: 40px; color: #6b21a8; font-style: italic; font-size: 18px; }
+        
+        /* Rainbow RGB Gradient & Font Classes for Footer */
+        .creator-footer { 
+            text-align: center; 
+            margin-top: 35px; 
+            font-size: 22px;
+            font-weight: bold; 
+            background: linear-gradient(90deg, red, orange, yellow, green, cyan, blue, violet, red);
+            background-size: 400% 400%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: rainbowColors 4s linear infinite;
+            transition: opacity 0.3s ease-in-out;
+        }
+
+        @keyframes rainbowColors {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .font-opt-0 { font-family: 'Cinzel', serif; }
+        .font-opt-1 { font-family: 'Playfair Display', serif; }
+        .font-opt-2 { font-family: 'Cormorant Garamond', serif; }
+        .font-opt-3 { font-family: 'Great Vibes', cursive; }
+        .font-opt-4 { font-family: 'Montserrat', sans-serif; }
+        .font-opt-5 { font-family: 'Oswald', sans-serif; }
+        .font-opt-6 { font-family: 'Sacramento', cursive; }
+        .font-opt-7 { font-family: 'Bebas Neue', cursive; }
+        .font-opt-8 { font-family: 'Dancing Script', cursive; }
+        .font-opt-9 { font-family: 'Lobster', cursive; }
+        .font-opt-10 { font-family: 'Pacifico', cursive; }
+        .font-opt-11 { font-family: 'Righteous', cursive; }
+        .font-opt-12 { font-family: 'Cinzel Decorative', serif; }
+
+        /* Modal Overlays (Login, Change Password, Forgot Password) */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.92);
+            backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        .modal-box {
+            background: linear-gradient(145deg, #ffffff, #f3e8ff);
+            padding: 40px;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 25px 50px rgba(124, 58, 237, 0.4);
+            text-align: center;
+            border: 1px solid #d8b4fe;
+        }
+        .modal-box h3 { margin-bottom: 25px; color: #581c87; font-size: 26px; }
+        .modal-input {
+            width: 100%;
+            padding: 14px 16px;
+            margin-bottom: 18px;
+            border: 1px solid #c084fc;
+            border-radius: 10px;
+            font-size: 16px;
+            font-family: 'Times New Roman', Times, serif;
+            box-sizing: border-box;
+            outline: none;
+            background: #ffffff;
+        }
+        .modal-input:focus { border-color: #7c3aed; box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.2); }
+        
+        .btn-modal {
+            background: linear-gradient(135deg, #7c3aed, #9b72cf);
+            color: white;
+            border: none;
+            padding: 14px;
+            width: 100%;
+            border-radius: 10px;
+            font-size: 18px;
+            font-family: 'Times New Roman', Times, serif;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(124, 58, 237, 0.4);
+            transition: transform 0.2s;
+            margin-bottom: 12px;
+        }
+        .btn-modal:hover { transform: translateY(-2px); }
+        .error-msg { color: #dc2626; font-size: 14px; margin-bottom: 15px; display: none; font-weight: bold; }
+        .success-msg { color: #059669; font-size: 14px; margin-bottom: 15px; display: none; font-weight: bold; }
+        
+        .link-text {
+            color: #7c3aed;
+            font-size: 14px;
+            cursor: pointer;
+            text-decoration: underline;
+            margin-top: 10px;
+            display: inline-block;
+        }
+        .link-text:hover { color: #581c87; }
+    </style>
+</head>
+<body>
+
+    <!-- 1. Login Overlay -->
+    <div id="loginOverlay" class="modal-overlay">
+        <div class="modal-box">
+            <h3>অ্যাডমিন লগইন</h3>
+            <div id="loginError" class="error-msg">ইউজার আইডি বা পাসওয়ার্ড ভুল হয়েছে!</div>
+            <input type="text" id="adminUser" class="modal-input" placeholder="Admin User ID">
+            <input type="password" id="adminPass" class="modal-input" placeholder="Password">
+            <button type="button" class="btn-modal" onclick="validateAdminLogin()">লগইন করুন</button>
+            <br>
+            <span class="link-text" onclick="openForgotModal()">পাসওয়ার্ড ভুলে গেছেন?</span>
+        </div>
+    </div>
+
+    <!-- 2. Forgot Password Overlay -->
+    <div id="forgotOverlay" class="modal-overlay" style="display: none;">
+        <div class="modal-box">
+            <h3>পাসওয়ার্ড রিকভারি</h3>
+            <div id="forgotError" class="error-msg">প্রদত্ত তথ্য সঠিক নয়!</div>
+            <div id="forgotSuccess" class="success-msg">আপনার মূল পাসওয়ার্ড: <span id="showPassText" style="color: #000; font-weight:bold;"></span></div>
+            <p style="font-size: 14px; color: #6b21a8; margin-bottom: 15px;">মাস্টার সিকিউরিটি কোড দিন:</p>
+            <input type="password" id="masterPin" class="modal-input" placeholder="Master Security PIN (454558)">
+            <button type="button" class="btn-modal" onclick="recoverPassword()">পাসওয়ার্ড দেখুন</button>
+            <br>
+            <span class="link-text" onclick="closeForgotModal()">লগইনে ফিরে যান</span>
+        </div>
+    </div>
+
+    <!-- 3. Change Password Overlay -->
+    <div id="changePassOverlay" class="modal-overlay" style="display: none;">
+        <div class="modal-box">
+            <h3>পাসওয়ার্ড পরিবর্তন</h3>
+            <div id="changeError" class="error-msg">পুরোনো পাসওয়ার্ড ভুল হয়েছে!</div>
+            <div id="changeSuccess" class="success-msg">পাসওয়ার্ড সফলভাবে পরিবর্তিত হয়েছে!</div>
+            <input type="password" id="oldPass" class="modal-input" placeholder="বর্তমান পাসওয়ার্ড">
+            <input type="password" id="newPass" class="modal-input" placeholder="নতুন পাসওয়ার্ড">
+            <button type="button" class="btn-modal" onclick="updatePassword()">পরিবর্তন করুন</button>
+            <br>
+            <span class="link-text" onclick="closeChangePassModal()">ফিরে যান</span>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="container">
+        <div class="header-flex">
+            <h2>অ্যাডমিন পেমেন্ট অ্যাপ্রুভাল প্যানেল</h2>
+            <div class="admin-controls">
+                <button class="btn-top-action" onclick="openChangePassModal()">পাসওয়ার্ড পরিবর্তন</button>
+                <button class="btn-top-action" onclick="adminLogout()" style="border-color: #ef4444; color: #dc2626;">লগআউট</button>
+            </div>
+        </div>
+        <div id="tableContainer"></div>
+        <button type="button" class="btn-clear" onclick="clearPayments()">সব ডাটা ও সিকিউরিটি লক রিসেট করুন</button>
+    </div>
+
+    <div class="creator-footer font-opt-0" id="creatorFooter">Created By Ridhoan Hossain Fahim</div>
+
+    <script>
+        // 13 Fonts rotating script every 15 seconds
+        let fontIndex = 0;
+        const totalFonts = 13;
+        setInterval(() => {
+            const footer = document.getElementById('creatorFooter');
+            if(footer) {
+                footer.style.opacity = 0;
+                setTimeout(() => {
+                    footer.className = footer.className.replace(/font-opt-\d+/g, '');
+                    fontIndex = (fontIndex + 1) % totalFonts;
+                    footer.classList.add('font-opt-' + fontIndex);
+                    footer.style.opacity = 1;
+                }, 300);
+            }
+        }, 15000);
+
+        const ADMIN_USER = "FahimHossain";
+        
+        if (!localStorage.getItem('adminPassword')) {
+            localStorage.setItem('adminPassword', "F@HIM454558");
+        }
+
+        const MASTER_PIN = "454558"; // Updated Master Pin
+
+        const firebaseConfig = {
+          apiKey: "AIzaSyBsEKJEtl5OLDPaTjB_sk7Reuf4yho8A7Q",
+          authDomain: "bd-trade-licence-proffesional.firebaseapp.com",
+          projectId: "bd-trade-licence-proffesional",
+          storageBucket: "bd-trade-licence-proffesional.firebasestorage.app",
+          messagingSenderId: "332551691723",
+          appId: "1:332551691723:web:6179094f6c23486a69ea4e",
+          measurementId: "G-BWPWWJHT61"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        function validateAdminLogin() {
+            let uInput = document.getElementById('adminUser').value.trim();
+            let pInput = document.getElementById('adminPass').value.trim();
+            let errBox = document.getElementById('loginError');
+            let savedPass = localStorage.getItem('adminPassword');
+
+            if (uInput === ADMIN_USER && pInput === savedPass) {
+                sessionStorage.setItem('isAdminLoggedIn', 'true');
+                document.getElementById('loginOverlay').style.display = 'none';
+                listenForPayments();
+            } else {
+                errBox.style.display = 'block';
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            if (sessionStorage.getItem('isAdminLoggedIn') === 'true') {
+                document.getElementById('loginOverlay').style.display = 'none';
+                listenForPayments();
+            } else {
+                document.getElementById('loginOverlay').style.display = 'flex';
+            }
+        });
+
+        function openForgotModal() {
+            document.getElementById('loginOverlay').style.display = 'none';
+            document.getElementById('forgotOverlay').style.display = 'flex';
+            document.getElementById('forgotError').style.display = 'none';
+            document.getElementById('forgotSuccess').style.display = 'none';
+            document.getElementById('masterPin').value = '';
+        }
+
+        function closeForgotModal() {
+            document.getElementById('forgotOverlay').style.display = 'none';
+            document.getElementById('loginOverlay').style.display = 'flex';
+        }
+
+        function recoverPassword() {
+            let pinInput = document.getElementById('masterPin').value.trim();
+            let errBox = document.getElementById('forgotError');
+            let successBox = document.getElementById('forgotSuccess');
+            let passText = document.getElementById('showPassText');
+
+            if (pinInput === MASTER_PIN) {
+                errBox.style.display = 'none';
+                passText.innerText = localStorage.getItem('adminPassword');
+                successBox.style.display = 'block';
+            } else {
+                successBox.style.display = 'none';
+                errBox.style.display = 'block';
+            }
+        }
+
+        function openChangePassModal() {
+            document.getElementById('changePassOverlay').style.display = 'flex';
+            document.getElementById('changeError').style.display = 'none';
+            document.getElementById('changeSuccess').style.display = 'none';
+            document.getElementById('oldPass').value = '';
+            document.getElementById('newPass').value = '';
+        }
+
+        function closeChangePassModal() {
+            document.getElementById('changePassOverlay').style.display = 'none';
+        }
+
+        function updatePassword() {
+            let oldInput = document.getElementById('oldPass').value.trim();
+            let newInput = document.getElementById('newPass').value.trim();
+            let errBox = document.getElementById('changeError');
+            let successBox = document.getElementById('changeSuccess');
+            let savedPass = localStorage.getItem('adminPassword');
+
+            if (oldInput === savedPass) {
+                if (newInput.length >= 6) {
+                    localStorage.setItem('adminPassword', newInput);
+                    errBox.style.display = 'none';
+                    successBox.style.display = 'block';
+                    setTimeout(() => {
+                        closeChangePassModal();
+                    }, 1500);
+                } else {
+                    alert("নতুন পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে!");
+                }
+            } else {
+                successBox.style.display = 'none';
+                errBox.style.display = 'block';
+            }
+        }
+
+        function adminLogout() {
+            sessionStorage.removeItem('isAdminLoggedIn');
+            location.reload();
+        }
+
+        function listenForPayments() {
+            const paymentsRef = db.ref('tradePaymentSubmissions');
+            
+            paymentsRef.on('value', (snapshot) => {
+                const data = snapshot.val();
+                let payments = [];
+                
+                if (data) {
+                    payments = Object.keys(data).map(key => ({
+                        firebaseKey: key,
+                        ...data[key]
+                    }));
+                }
+                
+                renderTable(payments);
+            });
+        }
+
+        function renderTable(payments) {
+            const container = document.getElementById('tableContainer');
+
+            if (payments.length === 0) {
+                container.innerHTML = `<div class="no-data">কোনো পেমেন্ট সাবমিশন পাওয়া যায়নি।</div>`;
+                return;
+            }
+
+            let html = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>তারিখ ও সময়</th>
+                            <th>লাইসেন্স নং</th>
+                            <th>প্রতিষ্ঠানের নাম</th>
+                            <th>Trx ID</th>
+                            <th>শেষ ৪ ডিজিট</th>
+                            <th style="text-align: center;">স্ট্যাটাস / অ্যাকশন</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            payments.forEach((p) => {
+                let statusActionHtml = "";
+
+                if (p.status === 'Approved') {
+                    statusActionHtml = `<button class="btn-approved" disabled>Approved ✔</button>`;
+                } else if (p.status === 'Rejected') {
+                    statusActionHtml = `<div style="display:flex; flex-direction:column; gap:5px; align-items:center;">
+                                            <button class="btn-rejected" disabled>Rejected ✖</button>
+                                            <button class="btn-approve" onclick="approvePayment('${p.firebaseKey}')" style="font-size:12px; padding:4px 10px;">আবার Approve করুন</button>
+                                        </div>`;
+                } else {
+                    statusActionHtml = `
+                        <div class="action-btns">
+                            <button class="btn-approve" onclick="approvePayment('${p.firebaseKey}')">Approve</button>
+                            <button class="btn-reject" onclick="rejectPayment('${p.firebaseKey}')">Reject</button>
+                        </div>
+                    `;
+                }
+
+                html += `
+                    <tr>
+                        <td>${p.date || '-'}</td>
+                        <td><strong>${p.license_no || '-'}</strong></td>
+                        <td>${p.business_name || '-'}</td>
+                        <td style="color: #7c3aed; font-weight: bold;">${p.trx_id}</td>
+                        <td style="text-align: center; font-weight: bold;">${p.last_digits}</td>
+                        <td style="text-align: center;">${statusActionHtml}</td>
+                    </tr>
+                `;
+            });
+
+            html += `</tbody></table>`;
+            container.innerHTML = html;
+        }
+
+        function approvePayment(firebaseKey) {
+            db.ref('tradePaymentSubmissions/' + firebaseKey).update({
+                status: 'Approved'
+            }, (error) => {
+                if (!error) {
+                    alert("পেমেন্ট সফলভাবে Approved করা হয়েছে!");
+                }
+            });
+        }
+
+        function rejectPayment(firebaseKey) {
+            if (confirm("আপনি কি এই পেমেন্ট রিকোয়েস্টটি বাতিল (Reject) করতে চান?")) {
+                db.ref('tradePaymentSubmissions/' + firebaseKey).update({
+                    status: 'Rejected'
+                }, (error) => {
+                    if (!error) {
+                        alert("পেমেন্ট সফলভাবে Reject করা হয়েছে!");
+                    }
+                });
+            }
+        }
+
+        function clearPayments() {
+            if (confirm("আপনি কি সমস্ত পেমেন্ট রেকর্ড মুছে ফেলতে চান?")) {
+                db.ref('tradePaymentSubmissions').remove().then(() => {
+                    alert("সকল ডাটা সফলভাবে মুছে ফেলা হয়েছে!");
+                });
+            }
+        }
+    </script>
+</body>
+</html>
